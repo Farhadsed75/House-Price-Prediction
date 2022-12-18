@@ -1,1 +1,391 @@
+import pandas as pd
+namelist = ['Building','BuildingAreas','ExteriorWall',
+            'ExtraFeature','Garage','Main','SaleData','TypeConstruction']
 
+content=open('E:/zillow/24/ZAsmt/%s.txt'%(namelist[0])).readlines()
+n=len(content)
+out1=[]
+out2=[]
+out3=[]
+
+def Building(out, lower, upper):
+    for i in range(lower,upper):
+        a=content[i]
+        b=a.split('|')
+        b[-1]=b[-1].replace('\n','')
+        b[0]=b[0].replace('-','')
+        out.append(b)
+    out=pd.DataFrame(out).rename(columns={0:'RowID',5:'PropertyLandUse',14:'YearBuilt',17:'NoOfStories',
+                                          25:'TotalBathCount',31:'HeatingType',44:'StoryType'})
+    out=out[['RowID','PropertyLandUse','YearBuilt','NoOfStories',
+             'TotalBathCount','HeatingType','StoryType']].drop_duplicates()
+    return out
+
+out1=Building(out1,0,1000000)
+out2=Building(out2,1000000,2000000)
+out3=Building(out3,2000000,n)
+Building=pd.concat([out1,out2,out3],axis=0).drop_duplicates().sort_values(by='RowID',ignore_index=True)
+Building.to_csv("E:/zillow/24/Building.csv")
+
+content=open('E:/zillow/24/ZAsmt/%s.txt'%(namelist[1])).readlines()
+n=len(content)
+out1=[]
+out2=[]
+out3=[]
+out4=[]
+out5=[]
+out6=[]
+out7=[]
+out8=[]
+out9=[]
+
+def BuildingAreas(out, lower, upper):
+    for i in range(lower,upper):
+        a=content[i]
+        b=a.split('|')
+        b[-1]=b[-1].replace('\n','')
+        b[0]=b[0].replace('-','')
+        out.append(b)
+    out=pd.DataFrame(out).rename(columns={0:'RowID',3:'BuildingArea',4:'BuildingAreaSqFt'})
+    out=out[['RowID','BuildingArea','BuildingAreaSqFt']].drop_duplicates()
+    return out
+
+out1=BuildingAreas(out1,0,1000000)
+out2=BuildingAreas(out2,1000000,2000000)
+out3=BuildingAreas(out3,2000000,3000000)
+out4=BuildingAreas(out4,3000000,4000000)
+out5=BuildingAreas(out5,4000000,5000000)
+out6=BuildingAreas(out6,5000000,6000000)
+out7=BuildingAreas(out7,6000000,7000000)
+out8=BuildingAreas(out8,7000000,8000000)
+out9=BuildingAreas(out9,8000000,n)
+BuildingAreas=pd.concat([out1,out2,out3,out4,out5,out6,out7,out8,out9],axis=0).drop_duplicates().sort_values(by='RowID',ignore_index=True)
+BuildingAreas.to_csv("E:/zillow/24/BuildingAreas.csv")
+
+content=open('E:/zillow/24/ZAsmt/%s.txt'%(namelist[2])).readlines()
+n=len(content)
+out1=[]
+out2=[]
+
+def ExteriorWall(out, lower, upper):
+    for i in range(lower,upper):
+        a=content[i]
+        b=a.split('|')
+        b[-1]=b[-1].replace('\n','')
+        b[0]=b[0].replace('-','')
+        out.append(b)
+    out=pd.DataFrame(out).rename(columns={0:'RowID',2:'ExteriorWall'})
+    out=out[['RowID','ExteriorWall']].drop_duplicates()
+    return out
+
+out1=ExteriorWall(out1,0,1000000)
+out2=ExteriorWall(out2,1000000,n)
+ExteriorWall=pd.concat([out1,out2],axis=0).drop_duplicates().sort_values(by='RowID',ignore_index=True)
+ExteriorWall.to_csv("E:/zillow/24/ExteriorWall.csv")
+
+content=open('E:/zillow/24/ZAsmt/%s.txt'%(namelist[3])).readlines()
+n=len(content)
+out=[]
+
+def ExtraFeature(out, lower, upper):
+    for i in range(lower,upper):
+        a=content[i]
+        b=a.split('|')
+        b[-1]=b[-1].replace('\n','')
+        b[0]=b[0].replace('-','')
+        out.append(b)
+    out=pd.DataFrame(out).rename(columns={0:'RowID',3:'ExtraFeatures',4:'ExtraFeaturesSqFt'})
+    out=out[['RowID','ExtraFeatures','ExtraFeaturesSqFt']].drop_duplicates()
+    return out
+
+ExtraFeature=ExtraFeature(out,0,n).drop_duplicates().sort_values(by='RowID',ignore_index=True)
+ExtraFeature.to_csv("E:/zillow/24/ExtraFeature.csv")
+
+content=open('E:/zillow/24/ZAsmt/%s.txt'%(namelist[4])).readlines()
+n=len(content)
+out1=[]
+out2=[]
+
+def Garage(out, lower, upper):
+    for i in range(lower,upper):
+        a=content[i]
+        b=a.split('|')
+        b[-1]=b[-1].replace('\n','')
+        b[0]=b[0].replace('-','')
+        out.append(b)
+    out=pd.DataFrame(out).rename(columns={0:'RowID',3:'Garage',4:'GarageAreaSqFt'})
+    out=out[['RowID','Garage','GarageAreaSqFt']].drop_duplicates()
+    return out
+
+out1=Garage(out1,0,1000000)
+out2=Garage(out2,1000000,n)
+Garage=pd.concat([out1,out2],axis=0).drop_duplicates().sort_values(by='RowID',ignore_index=True)
+Garage.to_csv("E:/zillow/24/Garage.csv")
+
+content=open('E:/zillow/24/ZAsmt/%s.txt'%(namelist[5])).readlines()
+n=len(content)
+out1=[]
+out2=[]
+out3=[]
+
+def Main(out, lower, upper):
+    for i in range(lower,upper):
+        a=content[i]
+        b=a.split('|')
+        b[-1]=b[-1].replace('\n','')
+        b[0]=b[0].replace('-','')
+        out.append(b)
+    out=pd.DataFrame(out).rename(columns={0:'RowID',3:'State',4:'County',26:'PropertyFullStreetAddress',27:'City',70:'LotSizeSquareFeet'})
+    out=out[['RowID','State','County','City','PropertyFullStreetAddress','LotSizeSquareFeet']].drop_duplicates()
+    return out
+
+out1=Main(out1,0,1000000)
+out2=Main(out2,1000000,2000000)
+out3=Main(out3,2000000,n)
+Main=pd.concat([out1,out2,out3],axis=0).drop_duplicates().sort_values(by='RowID',ignore_index=True)
+Main.to_csv("E:/zillow/24/Main.csv")
+
+content=open('E:/zillow/24/ZAsmt/%s.txt'%(namelist[6])).readlines()
+n=len(content)
+out1=[]
+out2=[]
+out3=[]
+out4=[]
+
+def SaleData(out, lower, upper):
+    for i in range(lower,upper):
+        a=content[i]
+        b=a.split('|')
+        b[-1]=b[-1].replace('\n','')
+        b[0]=b[0].replace('-','')
+        out.append(b)
+    out=pd.DataFrame(out).rename(columns={0:'RowID',4:'RecordingDate',11:'SalesPriceAmount'})
+    out=out[['RowID','RecordingDate','SalesPriceAmount']].drop_duplicates()
+    return out
+
+out1=SaleData(out1,0,1000000)
+out2=SaleData(out2,1000000,2000000)
+out3=SaleData(out3,2000000,3000000)
+out4=SaleData(out4,3000000,n)
+SaleData=pd.concat([out1,out2,out3,out4],axis=0).drop_duplicates().sort_values(by='RowID',ignore_index=True)
+SaleData.to_csv("E:/zillow/24/SaleData.csv")
+
+content=open('E:/zillow/24/ZAsmt/%s.txt'%(namelist[7])).readlines()
+n=len(content)
+out=[]
+
+def TypeConstruction(out, lower, upper):
+    for i in range(lower,upper):
+        a=content[i]
+        b=a.split('|')
+        b[-1]=b[-1].replace('\n','')
+        b[0]=b[0].replace('-','')
+        out.append(b)
+    out=pd.DataFrame(out).rename(columns={0:'RowID',2:'TypeConstruction'})
+    out=out[['RowID','TypeConstruction']].drop_duplicates()
+    return out
+
+TypeConstruction=TypeConstruction(out,0,n).drop_duplicates().sort_values(by='RowID',ignore_index=True)
+TypeConstruction.to_csv("E:/zillow/24/TypeConstruction.csv")
+
+#####################################################################
+
+content=open('E:/zillow/51/ZAsmt/%s.txt'%(namelist[0])).readlines()
+n=len(content)
+out1=[]
+out2=[]
+out3=[]
+out4=[]
+
+def Building(out, lower, upper):
+    for i in range(lower,upper):
+        a=content[i]
+        b=a.split('|')
+        b[-1]=b[-1].replace('\n','')
+        b[0]=b[0].replace('-','')
+        out.append(b)
+    out=pd.DataFrame(out).rename(columns={0:'RowID',5:'PropertyLandUse',14:'YearBuilt',17:'NoOfStories',
+                                          25:'TotalBathCount',31:'HeatingType',44:'StoryType'})
+    out=out[['RowID','PropertyLandUse','YearBuilt','NoOfStories',
+             'TotalBathCount','HeatingType','StoryType']].drop_duplicates()
+    return out
+
+out1=Building(out1,0,1000000)
+out2=Building(out2,1000000,2000000)
+out3=Building(out3,2000000,3000000)
+out4=Building(out4,3000000,n)
+Building=pd.concat([out1,out2,out3,out4],axis=0).drop_duplicates().sort_values(by='RowID',ignore_index=True)
+Building.to_csv("E:/zillow/51/Building.csv")
+
+content=open('E:/zillow/51/ZAsmt/%s.txt'%(namelist[1])).readlines()
+n=len(content)
+out1=[]
+out2=[]
+out3=[]
+out4=[]
+out5=[]
+out6=[]
+out7=[]
+out8=[]
+
+def BuildingAreas(out, lower, upper):
+    for i in range(lower,upper):
+        a=content[i]
+        b=a.split('|')
+        b[-1]=b[-1].replace('\n','')
+        b[0]=b[0].replace('-','')
+        out.append(b)
+    out=pd.DataFrame(out).rename(columns={0:'RowID',3:'BuildingArea',4:'BuildingAreaSqFt'})
+    out=out[['RowID','BuildingArea','BuildingAreaSqFt']].drop_duplicates()
+    return out
+
+out1=BuildingAreas(out1,0,1000000)
+out2=BuildingAreas(out2,1000000,2000000)
+out3=BuildingAreas(out3,2000000,3000000)
+out4=BuildingAreas(out4,3000000,4000000)
+out5=BuildingAreas(out5,4000000,5000000)
+out6=BuildingAreas(out6,5000000,6000000)
+out7=BuildingAreas(out7,6000000,7000000)
+out8=BuildingAreas(out8,7000000,n)
+BuildingAreas=pd.concat([out1,out2,out3,out4,out5,out6,out7,out8],axis=0).drop_duplicates().sort_values(by='RowID',ignore_index=True)
+BuildingAreas.to_csv("E:/zillow/51/BuildingAreas.csv")
+
+content=open('E:/zillow/51/ZAsmt/%s.txt'%(namelist[2])).readlines()
+n=len(content)
+out1=[]
+out2=[]
+out3=[]
+
+def ExteriorWall(out, lower, upper):
+    for i in range(lower,upper):
+        a=content[i]
+        b=a.split('|')
+        b[-1]=b[-1].replace('\n','')
+        b[0]=b[0].replace('-','')
+        out.append(b)
+    out=pd.DataFrame(out).rename(columns={0:'RowID',2:'ExteriorWall'})
+    out=out[['RowID','ExteriorWall']].drop_duplicates()
+    return out
+
+out1=ExteriorWall(out1,0,1000000)
+out2=ExteriorWall(out2,1000000,2000000)
+out3=ExteriorWall(out3,2000000,n)
+ExteriorWall=pd.concat([out1,out2,out3],axis=0).drop_duplicates().sort_values(by='RowID',ignore_index=True)
+ExteriorWall.to_csv("E:/zillow/51/ExteriorWall.csv")
+
+content=open('E:/zillow/51/ZAsmt/%s.txt'%(namelist[3])).readlines()
+n=len(content)
+out1=[]
+out2=[]
+
+def ExtraFeature(out, lower, upper):
+    for i in range(lower,upper):
+        a=content[i]
+        b=a.split('|')
+        b[-1]=b[-1].replace('\n','')
+        b[0]=b[0].replace('-','')
+        out.append(b)
+    out=pd.DataFrame(out).rename(columns={0:'RowID',3:'ExtraFeatures',4:'ExtraFeaturesSqFt'})
+    out=out[['RowID','ExtraFeatures','ExtraFeaturesSqFt']].drop_duplicates()
+    return out
+
+out1=ExtraFeature(out1,0,1000000)
+out2=ExtraFeature(out2,1000000,n)
+ExtraFeature=pd.concat([out1,out2],axis=0).drop_duplicates().sort_values(by='RowID',ignore_index=True)
+ExtraFeature.to_csv("E:/zillow/51/ExtraFeature.csv")
+
+content=open('E:/zillow/51/ZAsmt/%s.txt'%(namelist[4])).readlines()
+n=len(content)
+out1=[]
+out2=[]
+out3=[]
+
+def Garage(out, lower, upper):
+    for i in range(lower,upper):
+        a=content[i]
+        b=a.split('|')
+        b[-1]=b[-1].replace('\n','')
+        b[0]=b[0].replace('-','')
+        out.append(b)
+    out=pd.DataFrame(out).rename(columns={0:'RowID',3:'Garage',4:'GarageAreaSqFt'})
+    out=out[['RowID','Garage','GarageAreaSqFt']].drop_duplicates()
+    return out
+
+out1=Garage(out1,0,1000000)
+out2=Garage(out2,1000000,2000000)
+out3=Garage(out3,2000000,n)
+Garage=pd.concat([out1,out2,out3],axis=0).drop_duplicates().sort_values(by='RowID',ignore_index=True)
+Garage.to_csv("E:/zillow/51/Garage.csv")
+
+content=open('E:/zillow/51/ZAsmt/%s.txt'%(namelist[5])).readlines()
+n=len(content)
+out1=[]
+out2=[]
+out3=[]
+out4=[]
+
+def Main(out, lower, upper):
+    for i in range(lower,upper):
+        a=content[i]
+        b=a.split('|')
+        b[-1]=b[-1].replace('\n','')
+        b[0]=b[0].replace('-','')
+        out.append(b)
+    out=pd.DataFrame(out).rename(columns={0:'RowID',3:'State',4:'County',26:'PropertyFullStreetAddress',27:'City',70:'LotSizeSquareFeet'})
+    out=out[['RowID','State','County','City','PropertyFullStreetAddress','LotSizeSquareFeet']].drop_duplicates()
+    return out
+
+out1=Main(out1,0,1000000)
+out2=Main(out2,1000000,2000000)
+out3=Main(out3,2000000,3000000)
+out4=Main(out4,3000000,n)
+Main=pd.concat([out1,out2,out3,out4],axis=0).drop_duplicates().sort_values(by='RowID',ignore_index=True)
+Main.to_csv("E:/zillow/51/Main.csv")
+
+content=open('E:/zillow/51/ZAsmt/%s.txt'%(namelist[6])).readlines()
+n=len(content)
+out1=[]
+out2=[]
+out3=[]
+out4=[]
+out5=[]
+
+def SaleData(out, lower, upper):
+    for i in range(lower,upper):
+        a=content[i]
+        b=a.split('|')
+        b[-1]=b[-1].replace('\n','')
+        b[0]=b[0].replace('-','')
+        out.append(b)
+    out=pd.DataFrame(out).rename(columns={0:'RowID',4:'RecordingDate',11:'SalesPriceAmount'})
+    out=out[['RowID','RecordingDate','SalesPriceAmount']].drop_duplicates()
+    return out
+
+out1=SaleData(out1,0,1000000)
+out2=SaleData(out2,1000000,2000000)
+out3=SaleData(out3,2000000,3000000)
+out4=SaleData(out4,3000000,4000000)
+out5=SaleData(out5,4000000,n)
+SaleData=pd.concat([out1,out2,out3,out4,out5],axis=0).drop_duplicates().sort_values(by='RowID',ignore_index=True)
+SaleData.to_csv("E:/zillow/51/SaleData.csv")
+
+content=open('E:/zillow/51/ZAsmt/%s.txt'%(namelist[7])).readlines()
+n=len(content)
+out1=[]
+out2=[]
+
+def TypeConstruction(out, lower, upper):
+    for i in range(lower,upper):
+        a=content[i]
+        b=a.split('|')
+        b[-1]=b[-1].replace('\n','')
+        b[0]=b[0].replace('-','')
+        out.append(b)
+    out=pd.DataFrame(out).rename(columns={0:'RowID',2:'TypeConstruction'})
+    out=out[['RowID','TypeConstruction']].drop_duplicates()
+    return out
+
+out1=TypeConstruction(out1,0,1000000)
+out2=TypeConstruction(out2,1000000,n)
+TypeConstruction=pd.concat([out1,out2],axis=0).drop_duplicates().sort_values(by='RowID',ignore_index=True)
+TypeConstruction.to_csv("E:/zillow/51/TypeConstruction.csv")
