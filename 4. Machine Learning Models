@@ -1,1 +1,168 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import lightgbm
+from sklearn.preprocessing import MinMaxScaler
+from sklearn import metrics
+from sklearn.model_selection import train_test_split
+import joblib
+from tensorflow import keras
+from tensorflow.keras.models import Sequential,load_model
+from tensorflow.keras.layers import Dense,Dropout
+from sklearn.linear_model import LinearRegression
 
+df0 = pd.read_csv("E:/dataset.csv").drop('Unnamed: 0',axis=1)
+df = df0.drop_duplicates()
+
+test_size_amount = 0.2
+
+dataset = df.values.astype('float32')
+scaler = MinMaxScaler(feature_range=(-1,1))
+dataset = scaler.fit_transform(dataset)
+datasetX, datasetY = dataset[:,1:] , dataset[:,0]
+trainX, testX, trainY, testY = train_test_split(datasetX, datasetY, test_size = test_size_amount, shuffle = False) 
+
+rf = lightgbm.LGBMRegressor(n_estimators=1260, max_depth=12, num_leaves=85,
+                            reg_lambda=301)
+
+rf.fit(trainX, trainY)
+rf_predtestY = rf.predict(testX)
+rf_predtrainY = rf.predict(trainX)
+
+testY_Real = np.transpose([testY] * dataset.shape[1])
+testY_Real = scaler.inverse_transform(testY_Real)[:,0]
+trainY_Real = np.transpose([trainY] * dataset.shape[1])
+trainY_Real = scaler.inverse_transform(trainY_Real)[:,0]
+testY_Real = df0['AvgSalesPriceAmount'][len(trainX):] + testY_Real
+trainY_Real = df0['AvgSalesPriceAmount'][:len(trainX)] + trainY_Real
+
+rf_predtestY_Real = np.transpose([rf_predtestY] * dataset.shape[1])
+rf_predtestY_Real = scaler.inverse_transform(rf_predtestY_Real)[:,0]
+rf_predtrainY_Real = np.transpose([rf_predtrainY] * dataset.shape[1])
+rf_predtrainY_Real = scaler.inverse_transform(rf_predtrainY_Real)[:,0]
+rf_predtestY_Real = df0['AvgSalesPriceAmount'][len(trainX):] + rf_predtestY_Real
+rf_predtrainY_Real = df0['AvgSalesPriceAmount'][:len(trainX)] + rf_predtrainY_Real
+
+print("\nTest R2 is = ",metrics.r2_score(testY_Real, rf_predtestY_Real))
+print("Test RMSE is = ",metrics.mean_squared_error(testY_Real, rf_predtestY_Real, squared=False))
+print("\nTrain R2 is = ",metrics.r2_score(trainY_Real, rf_predtrainY_Real))
+print("Train RMSE is = ",metrics.mean_squared_error(trainY_Real, rf_predtrainY_Real, squared=False))
+
+joblib.dump(rf, "E:/LightGBM.joblib")
+
+df = pd.read_csv("E:/dataset.csv").drop('Unnamed: 0',axis=1)
+
+test_size_amount = 0.2
+epochs = 200
+batch_size = 32
+
+dataset = df.values.astype('float32')
+scaler = MinMaxScaler(feature_range=(-1,1))
+dataset = scaler.fit_transform(dataset)
+datasetX, datasetY = dataset[:,1:] , dataset[:,0]
+trainX, testX, trainY, testY = train_test_split(datasetX, datasetY, test_size = test_size_amount, shuffle = False) 
+
+model = Sequential()
+model.add(Dense(256, activation='relu', input_shape=(datasetX.shape[1],)))
+model.add(Dropout(0.05))
+model.add(Dense(256, activation='relu'))
+model.add(Dropout(0.05))
+model.add(Dense(1))
+
+model.summary()
+opt = keras.optimizers.SGD(momentum=0.9, learning_rate=0.005)
+model.compile(loss='mse', optimizer=opt)
+history = model.fit(trainX, trainY, epochs=epochs, batch_size=batch_size, 
+                    validation_data=(testX, testY), verbose=1)
+
+predictedtestY = model.predict(testX)
+predictedtrainY = model.predict(trainX)
+predictedtestY = predictedtestY[:,0]
+predictedtrainY = predictedtrainY[:,0]
+
+testY_Real = np.transpose([testY] * dataset.shape[1])
+testY_Real = scaler.inverse_transform(testY_Real)[:,0]
+trainY_Real = np.transpose([trainY] * dataset.shape[1])
+trainY_Real = scaler.inverse_transform(trainY_Real)[:,0]
+testY_Real = df['AvgSalesPriceAmount'][len(trainX):] + testY_Real
+trainY_Real = df['AvgSalesPriceAmount'][:len(trainX)] + trainY_Real
+
+rf_predtestY_Real = np.transpose([predictedtestY] * dataset.shape[1])
+rf_predtestY_Real = scaler.inverse_transform(rf_predtestY_Real)[:,0]
+rf_predtrainY_Real = np.transpose([predictedtrainY] * dataset.shape[1])
+rf_predtrainY_Real = scaler.inverse_transform(rf_predtrainY_Real)[:,0]
+rf_predtestY_Real = df['AvgSalesPriceAmount'][len(trainX):] + rf_predtestY_Real
+rf_predtrainY_Real = df['AvgSalesPriceAmount'][:len(trainX)] + rf_predtrainY_Real
+
+print("\nTest R2 is = ",metrics.r2_score(testY_Real, rf_predtestY_Real))
+print("Test RMSE is = ",metrics.mean_squared_error(testY_Real, rf_predtestY_Real, squared=False))
+print("\nTrain R2 is = ",metrics.r2_score(trainY_Real, rf_predtrainY_Real))
+print("Train RMSE is = ",metrics.mean_squared_error(trainY_Real, rf_predtrainY_Real, squared=False))
+
+model.save("E:/ANN.h5")
+
+df0 = pd.read_csv("E:/dataset.csv").drop('Unnamed: 0',axis=1)
+df = df0.drop_duplicates()
+
+test_size_amount = 0.2
+
+dataset = df.values.astype('float32')
+scaler = MinMaxScaler(feature_range=(-1,1))
+dataset = scaler.fit_transform(dataset)
+datasetX, datasetY = dataset[:,1:] , dataset[:,0]
+trainX, testX, trainY, testY = train_test_split(datasetX, datasetY, test_size = test_size_amount, shuffle = False) 
+
+LightGBM = joblib.load("E:/LightGBM.joblib")
+ANN = load_model("E:/ANN.h5")
+
+predLightGBM1 = LightGBM.predict(trainX)
+predANN1 = ANN.predict(trainX)
+predANN1 = predANN1[:,0]
+trainXout = np.stack((predANN1,
+                      predLightGBM1), axis=1)
+trainYout = trainY
+
+predLightGBM2 = LightGBM.predict(testX)
+predANN2 = ANN.predict(testX)
+predANN2 = predANN2[:,0]
+testXout = np.stack((predANN2,
+                     predLightGBM2), axis=1)
+testYout = testY
+
+rf = LinearRegression()
+rf.fit(trainXout, trainYout)
+rf_predtestY = rf.predict(testXout)
+rf_predtrainY = rf.predict(trainXout)
+
+testY_Real = np.transpose([testYout] * dataset.shape[1])
+testY_Real = scaler.inverse_transform(testY_Real)[:,0]
+trainY_Real = np.transpose([trainYout] * dataset.shape[1])
+trainY_Real = scaler.inverse_transform(trainY_Real)[:,0]
+testY_Real = df0['AvgSalesPriceAmount'][len(trainX):] + testY_Real
+trainY_Real = df0['AvgSalesPriceAmount'][:len(trainX)] + trainY_Real
+
+rf_predtestY_Real = np.transpose([rf_predtestY] * dataset.shape[1])
+rf_predtestY_Real = scaler.inverse_transform(rf_predtestY_Real)[:,0]
+rf_predtrainY_Real = np.transpose([rf_predtrainY] * dataset.shape[1])
+rf_predtrainY_Real = scaler.inverse_transform(rf_predtrainY_Real)[:,0]
+rf_predtestY_Real = df0['AvgSalesPriceAmount'][len(trainX):] + rf_predtestY_Real
+rf_predtrainY_Real = df0['AvgSalesPriceAmount'][:len(trainX)] + rf_predtrainY_Real
+
+print("\nTest R2 is = ",metrics.r2_score(testY_Real, rf_predtestY_Real))
+print("Test RMSE is = ",metrics.mean_squared_error(testY_Real, rf_predtestY_Real, squared=False))
+print("\nTrain R2 is = ",metrics.r2_score(trainY_Real, rf_predtrainY_Real))
+print("Train RMSE is = ",metrics.mean_squared_error(trainY_Real, rf_predtrainY_Real, squared=False))
+
+joblib.dump(rf, "E:/Stack.joblib")
+
+plt.rcParams.update({'font.family':'Times New Roman'})
+def plot_scatter(prediction, actual):
+    plt.scatter(prediction, actual)
+    plt.plot(np.unique(prediction), np.poly1d(np.polyfit(prediction, actual, 1))(np.unique(prediction)),'k--')
+    plt.xlabel("Prediction")
+    plt.ylabel("Actual")
+    plt.legend(['Line of best fit', 'House Price ($)'])
+
+plot_scatter(rf_predtestY_Real, testY_Real)
+plt.savefig("C:/Users/Farhad/Desktop/farhad sedighi paper/Stack.jpg", dpi = 1000 , bbox_inches = 'tight')
+plt.close()
