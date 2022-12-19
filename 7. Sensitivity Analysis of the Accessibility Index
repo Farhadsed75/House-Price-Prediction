@@ -1,1 +1,40 @@
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
+from tensorflow.keras.models import load_model
+import joblib
 
+df0 = pd.read_csv("E:/dataset.csv").drop('Unnamed: 0',axis=1)
+df = df0.drop_duplicates()
+
+df0_pred = pd.read_csv("E:/ForPrediction_Access_large.csv").drop('Unnamed: 0',axis=1)
+df_pred = df0_pred.drop_duplicates()
+NumberOfSamples = df_pred.shape[0]
+out = pd.concat([df_pred,df],axis=0)
+dataset = out.values.astype('float32')
+scaler = MinMaxScaler(feature_range=(-1,1))
+dataset = scaler.fit_transform(dataset)
+datasetX, datasetY = dataset[:,1:] , dataset[:,0]
+datasetX = datasetX[:NumberOfSamples]
+
+a = 2*(df_pred['AM_HWY_Hv3']-df0['AM_HWY_Hv3'].min())/(df0['AM_HWY_Hv3'].max()-df0['AM_HWY_Hv3'].min())-1
+datasetX[:,26] = a
+
+LightGBM = joblib.load("E:/LightGBM.joblib")
+ANN = load_model("E:/ANN.h5")
+
+predLightGBM1 = LightGBM.predict(datasetX)
+predANN1 = ANN.predict(datasetX)
+predANN1 = predANN1[:,0]
+datasetXout = np.stack((predANN1, predLightGBM1), axis=1)
+
+rf = joblib.load("E:/Stack.joblib")
+
+prediction = rf.predict(datasetXout)
+prediction_Real = np.transpose([prediction] * dataset.shape[1])
+prediction_Real = scaler.inverse_transform(prediction_Real)[:,0].round(decimals=0)
+prediction_Real = df0_pred['AvgSalesPriceAmount'][:NumberOfSamples] + prediction_Real
+access_index = out['AM_HWY_Hv3'][:NumberOfSamples]
+access_index = pd.DataFrame(access_index)
+
+access_index = access_index.join(prediction_Real).sort_values(by='AM_HWY_Hv3',ignore_index=True)
