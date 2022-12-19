@@ -1,1 +1,41 @@
+import geopandas as gpd
+import pandas as pd
+from geopy.geocoders import Nominatim
+from geopy.extra.rate_limiter import RateLimiter
+from tqdm import tqdm
 
+data = pd.read_csv("E:/zillow/24/Main.csv").drop('Unnamed: 0',axis=1)[['RowID','PropertyFullStreetAddress']]
+data = data.dropna(subset=['PropertyFullStreetAddress'])
+data['Address'] = data['PropertyFullStreetAddress'].astype(str)+',MD' 
+data = data[['RowID','Address']]
+tqdm.pandas()
+locator = Nominatim(user_agent='Farhad')
+geocode = RateLimiter(locator.geocode, min_delay_seconds=1)
+data['location'] = data['Address'].progress_apply(geocode)
+data['Lat'] = data['location'].apply(lambda x:x.latitude if x else None)
+data['Long'] = data['location'].apply(lambda x:x.longitude if x else None)
+washington = gpd.read_file("E:/Transportation_Analysis_Zones_(TAZ).shp") 
+washington.to_crs(epsg=4326,inplace=True)
+washington = washington[['TAZ','geometry']]
+gdf = gpd.GeoDataFrame(data, geometry=gpd.points_from_xy(data.Long, data.Lat))
+final = gpd.sjoin(washington,gdf, how="inner", op='intersects')[['RowID', 'Address', 'TAZ']].drop_duplicates().sort_values(by='RowID',ignore_index=True)
+
+final.to_csv("E:/MarylandUltimateRight.csv")
+
+data = pd.read_csv("E:/zillow/51/Main.csv").drop('Unnamed: 0',axis=1)[['RowID','PropertyFullStreetAddress']]
+data = data.dropna(subset=['PropertyFullStreetAddress'])
+data['Address'] = data['PropertyFullStreetAddress'].astype(str)+',VA' 
+data = data[['RowID','Address']]
+tqdm.pandas()
+locator = Nominatim(user_agent='Farhad')
+geocode = RateLimiter(locator.geocode, min_delay_seconds=1)
+data['location'] = data['Address'].progress_apply(geocode)
+data['Lat'] = data['location'].apply(lambda x:x.latitude if x else None)
+data['Long'] = data['location'].apply(lambda x:x.longitude if x else None)
+washington = gpd.read_file("E:/Transportation_Analysis_Zones_(TAZ).shp") 
+washington.to_crs(epsg=4326,inplace=True)
+washington = washington[['TAZ','geometry']]
+gdf = gpd.GeoDataFrame(data, geometry=gpd.points_from_xy(data.Long, data.Lat))
+final = gpd.sjoin(washington,gdf, how="inner", op='intersects')[['RowID', 'Address', 'TAZ']].drop_duplicates().sort_values(by='RowID',ignore_index=True)
+
+final.to_csv("E:/VirginiaUltimateRight.csv")
