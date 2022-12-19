@@ -1,1 +1,150 @@
+import numpy as np
+from tensorflow.keras.models import load_model
+import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
 
+df0 = pd.read_csv("E:/dataset1.csv").drop(['Unnamed: 0','RecordingDateYear','RecordingDateMonth'],axis=1)
+
+shift_number = 12
+
+df0['SalesPriceAmount_log'] = np.log(df0['SalesPriceAmount'])
+df0['SalesPriceAmount_log_diff'] = df0['SalesPriceAmount_log'] - df0['SalesPriceAmount_log'].shift(shift_number)
+df = df0.dropna(subset = ['SalesPriceAmount_log_diff'],how='all')
+df = df[['SalesPriceAmount_log_diff','InterestRate','HomeownershipRate','MonthsOnSales', 
+         'SupplyOfHouses','NewHousesForSale','NewHousesAuthorized', 'UnemploymentRate']]
+
+initial_variable_index = 0
+final_variable_index = 7
+shift = 1
+window_size = 2
+train_size_percent = 0.7
+epochs = 100
+batch_size = 32
+
+time = np.array(range(len(df)))
+dataset = df[list(df)[initial_variable_index : final_variable_index+1]].astype('float32')
+scaler = MinMaxScaler(feature_range=(-1,1))
+dataset = scaler.fit_transform(dataset)
+
+def windowed_dataset(dataset , shift , window_size):
+    dataX , dataY = [] , []
+    for i in range(window_size , len(dataset)-shift+1):
+        dataX.append(dataset[i-window_size:i , 0:dataset.shape[1]])
+        dataY.append(dataset[i+shift-1:i+shift , 0])
+    return np.array(dataX) , np.array(dataY)
+
+train_size = int(len(dataset) * train_size_percent)
+train , test = dataset[:train_size] , dataset[train_size:]
+time_train , time_test = time[:train_size] , time[train_size+window_size:]    
+trainX , trainY = windowed_dataset(train , shift , window_size)
+testX , testY = windowed_dataset(test , shift , window_size) 
+
+model = load_model("E:/TimeSeriesANN.h5")
+model.summary()
+
+predictedtestY = model.predict(testX)
+predictedtrainY = model.predict(trainX)
+
+trainY = trainY[:,0]
+testY = testY[:,0]
+testY_Real = np.transpose([testY] * 8)
+testY_Real = scaler.inverse_transform(testY_Real)[:,0]
+trainY_Real = np.transpose([trainY] * 8)
+trainY_Real = scaler.inverse_transform(trainY_Real)[:,0]
+
+df0 = df0[['SalesPriceAmount','SalesPriceAmount_log']]
+
+trainY_Real = pd.Series(trainY_Real, name='trainY_Real')
+df0 = df0.join(trainY_Real)
+df0['trainY_Real']=df0['trainY_Real'].shift(window_size)
+df0['trainY_Real']=df0['trainY_Real']+df0['SalesPriceAmount_log']
+df0['trainY_Real']=df0['trainY_Real'].shift(shift_number)
+df0['trainY_Real']=np.exp(df0['trainY_Real'])
+
+testY_Real = pd.Series(testY_Real, name='testY_Real')
+df0 = df0.join(testY_Real)
+df0['testY_Real']=df0['testY_Real'].shift(window_size + train_size)
+df0['testY_Real']=df0['testY_Real']+df0['SalesPriceAmount_log']
+df0['testY_Real']=df0['testY_Real'].shift(shift_number)
+df0['testY_Real']=np.exp(df0['testY_Real'])
+
+predictedtrainY = predictedtrainY[:,0]
+predictedtestY = predictedtestY[:,0]
+predictedtestY_Real = np.transpose([predictedtestY] * 8)
+predictedtestY_Real = scaler.inverse_transform(predictedtestY_Real)[:,0]
+predictedtrainY_Real = np.transpose([predictedtrainY] * 8)
+predictedtrainY_Real = scaler.inverse_transform(predictedtrainY_Real)[:,0]
+
+predictedtrainY_Real = pd.Series(predictedtrainY_Real, name='predictedtrainY_Real')
+df0 = df0.join(predictedtrainY_Real)
+df0['predictedtrainY_Real']=df0['predictedtrainY_Real'].shift(window_size)
+df0['predictedtrainY_Real']=df0['predictedtrainY_Real']+df0['SalesPriceAmount_log']
+df0['predictedtrainY_Real']=df0['predictedtrainY_Real'].shift(shift_number)
+df0['predictedtrainY_Real']=np.exp(df0['predictedtrainY_Real'])
+
+predictedtestY_Real = pd.Series(predictedtestY_Real, name='predictedtestY_Real')
+df0 = df0.join(predictedtestY_Real)
+df0['predictedtestY_Real']=df0['predictedtestY_Real'].shift(window_size + train_size)
+df0['predictedtestY_Real']=df0['predictedtestY_Real']+df0['SalesPriceAmount_log']
+df0['predictedtestY_Real']=df0['predictedtestY_Real'].shift(shift_number)
+df0['predictedtestY_Real']=np.exp(df0['predictedtestY_Real'])
+
+trainY_Real = df0['trainY_Real'].dropna()
+predictedtrainY_Real = df0['predictedtrainY_Real'].dropna()
+testY_Real = df0['testY_Real'].dropna()
+predictedtestY_Real = df0['predictedtestY_Real'].dropna()
+
+date = pd.read_csv("E:/dataset1_predict1.csv").drop('Unnamed: 0',axis=1)[['DATE']]   
+df0 = df0.join(date)
+date_train , date_test = df0[['trainY_Real','DATE']].dropna()['DATE'] , df0[['testY_Real','DATE']].dropna()['DATE'] 
+
+prediction = pd.read_csv("E:/dataset1_predict1.csv").drop('Unnamed: 0',axis=1)  
+prediction = prediction.iloc[:,-8:][12:].values
+bankloanrate = 5
+a = 2*(bankloanrate-df['InterestRate'].min())/(df['InterestRate'].max()-df['InterestRate'].min())-1
+prediction[480:492,1] = a
+
+d=[]
+for i in range(0,30):
+    d.append(np.nan)
+d = np.array(d)
+d = np.reshape(d, (-1, 1))
+d = pd.DataFrame(d)
+d1 = pd.DataFrame(dataset[:,0])
+d1 = pd.concat([d1, d], axis=0, ignore_index=True)
+prediction[:,0] = d1[0]
+
+test1 = prediction[478:480,:]
+
+out = []
+prediction_amount = 60
+for i in range(0,prediction_amount):
+    test1 = np.vstack([test1, prediction[492-shift_number+i,:]])
+    predX , predY = windowed_dataset(test1 , shift , window_size)
+    predYY = model.predict(predX)
+    out.append(predYY[0,0])
+    test1[-1,0] = predYY[0,0]
+    test1 = test1[1:]
+
+out = np.array(out)
+out_Real = np.transpose([out] * 8)
+out_Real = scaler.inverse_transform(out_Real)[:,0]
+out_Real = pd.Series(out_Real, name='out_Real')
+out_Real.index = np.arange(492,492+prediction_amount,1)
+
+d=[]
+for i in range(0,7):
+    d.append(np.nan)
+d = np.array(d)
+d = np.reshape(d, (1, -1))
+d = np.repeat(d, prediction_amount, axis=0)
+d = pd.DataFrame(d, columns=df0.columns)
+
+df0 = df0.drop(df0.index[492:])
+df0 = pd.concat([df0, d], axis=0, ignore_index=True)
+df0 = df0.join(out_Real)
+for i in range(492,552):
+    df0.iloc[i,1] = df0.iloc[i,-1] + df0.iloc[i-shift_number,1]
+df0['out_Real'] = np.exp(df0['SalesPriceAmount_log']).round(decimals=0)
+
+Predicted_SalesPriceAmount = df0['out_Real'][492:]
